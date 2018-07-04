@@ -844,8 +844,25 @@ private func sandboxProfile(allowedDirectories: [AbsolutePath]) -> String {
 }
 
 extension Build.Configuration: StringEnumArgument {
+    public init?(rawValue: String) {
+        switch rawValue {
+        case Configuration.normalDebug.description:
+            self = Configuration.normalDebug
+        case Configuration.normalRelease.description:
+            self = Configuration.normalRelease
+        case Configuration.fuzzDebug.description:
+            self = Configuration.fuzzDebug
+        case Configuration.fuzzRelease.description:
+            self = Configuration.fuzzRelease
+        default:
+            return nil
+        }
+    }
+
     public static var completion: ShellCompletion = .values([
-        (debug.rawValue, "build with DEBUG configuration"),
-        (release.rawValue, "build with RELEASE configuration"),
+        (normalDebug.description, "build with DEBUG configuration"),
+        (normalRelease.description, "build with RELEASE configuration"),
+        (fuzzDebug.description, "build with DEBUG configuration for FUZZ-TESTING purposes"),
+        (fuzzRelease.description, "build with RELEASE configuration for FUZZ-TESTING purposes"),
     ])
 }

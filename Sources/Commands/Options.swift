@@ -17,7 +17,7 @@ public class ToolOptions {
     public var buildFlags = BuildFlags()
     
     /// Build configuration.
-    public var configuration: Build.Configuration = .debug
+    public var configuration: Build.Configuration = .normalDebug
 
     /// The custom build directory, if provided.
     public var buildPath: AbsolutePath?

@@ -45,7 +45,7 @@ final class BuildPlanTests: XCTestCase {
 
     func mockBuildParameters(
         buildPath: AbsolutePath = AbsolutePath("/path/to/build"),
-        config: Build.Configuration = .debug,
+        config: Build.Configuration = .normalDebug,
         shouldLinkStaticSwiftStdlib: Bool = false
     ) -> BuildParameters {
         return BuildParameters(
@@ -160,7 +160,7 @@ final class BuildPlanTests: XCTestCase {
         )
         let diagnostics = DiagnosticsEngine()
         let graph = loadMockPackageGraph(["/Pkg": Package(name: "Pkg")], root: "/Pkg", diagnostics: diagnostics, in: fs)
-        let result = BuildPlanResult(plan: try BuildPlan(buildParameters: mockBuildParameters(config: .release), graph: graph, diagnostics: diagnostics, fileSystem: fs))
+        let result = BuildPlanResult(plan: try BuildPlan(buildParameters: mockBuildParameters(config: .normalRelease), graph: graph, diagnostics: diagnostics, fileSystem: fs))
 
         result.checkProductsCount(1)
         result.checkTargetsCount(1)

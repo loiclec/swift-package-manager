@@ -229,26 +229,12 @@ public final class ClangTargetDescription {
 
     /// Optimization arguments according to the build configuration.
     private var optimizationArguments: [String] {
-        switch buildParameters.configuration {
-        case .debug:
-            return ["-g", "-O0"]
-        case .release:
-            return ["-O2"]
-        }
+        return buildParameters.configuration.clangOptimizationArguments
     }
 
     /// A list of compilation conditions to enable for conditional compilation expressions.
     private var activeCompilationConditions: [String] {
-        var compilationConditions = ["-DSWIFT_PACKAGE=1"]
-
-        switch buildParameters.configuration {
-        case .debug:
-            compilationConditions += ["-DDEBUG=1"]
-        case .release:
-            break
-        }
-
-        return compilationConditions
+        return buildParameters.configuration.clangActiveCompilationConditions
     }
 
 
@@ -328,7 +314,7 @@ public final class SwiftTargetDescription {
         //
         // Technically, it should be enabled whenever WMO is off but we
         // don't currently make that distinction in SwiftPM
-        switch buildParameters.configuration {
+        switch buildParameters.configuration.optimization {
         case .debug:
             args += ["-enable-batch-mode"]
         case .release: break
@@ -354,26 +340,12 @@ public final class SwiftTargetDescription {
 
     /// A list of compilation conditions to enable for conditional compilation expressions.
     private var activeCompilationConditions: [String] {
-        var compilationConditions = ["-DSWIFT_PACKAGE"]
-
-        switch buildParameters.configuration {
-        case .debug:
-            compilationConditions += ["-DDEBUG"]
-        case .release:
-            break
-        }
-
-        return compilationConditions
+        return buildParameters.configuration.swiftActiveCompilationConditions
     }
 
     /// Optimization arguments according to the build configuration.
     private var optimizationArguments: [String] {
-        switch buildParameters.configuration {
-        case .debug:
-            return ["-Onone", "-g", "-enable-testing"]
-        case .release:
-            return ["-O"]
-        }
+        return buildParameters.configuration.swiftOptimizationArguments
     }
 
     /// Module cache arguments.
@@ -465,7 +437,7 @@ public final class ProductBuildDescription {
         args += buildParameters.sanitizers.linkSwiftFlags()
         args += additionalFlags
 
-        if buildParameters.configuration == .debug {
+        if buildParameters.configuration.optimization == .debug {
             args += ["-g"]
         }
         args += ["-L", buildParameters.buildPath.asString]
