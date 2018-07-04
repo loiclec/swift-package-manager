@@ -15,12 +15,14 @@ import Utility
 public enum Sanitizer: String {
     case address
     case thread
+    case fuzzer
 
     /// Return an established short name for a sanitizer, e.g. "asan".
     public var shortName: String {
         switch self {
             case .address: return "asan"
             case .thread: return "tsan"
+            case .fuzzer: return "fuzzer"
         }
     }
 }
@@ -28,7 +30,7 @@ public enum Sanitizer: String {
 /// A set of enabled runtime sanitizers.
 public struct EnabledSanitizers {
     /// A set of enabled sanitizers.
-    public let sanitizers: Set<Sanitizer>
+    public var sanitizers: Set<Sanitizer>
 
     public init(_ sanitizers: Set<Sanitizer> = []) {
         // FIXME: We need to throw from here if given sanitizers can't be
@@ -49,7 +51,7 @@ public struct EnabledSanitizers {
 
     /// Sanitization flags for the Swift linker and compiler are the same so far.
     public func linkSwiftFlags() -> [String] {
-        return compileSwiftFlags()
+        return EnabledSanitizers(sanitizers.subtracting([.fuzzer])).compileSwiftFlags()
     }
 
     public var isEmpty: Bool {
@@ -61,5 +63,6 @@ extension Sanitizer: StringEnumArgument {
     public static let completion: ShellCompletion = .values([
         (address.rawValue, "enable Address sanitizer"),
         (thread.rawValue, "enable Thread sanitizer"),
+        (fuzzer.rawValue, "enable Fuzzer sanitizer"),
     ])
 }

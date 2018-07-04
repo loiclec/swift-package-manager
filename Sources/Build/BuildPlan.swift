@@ -73,7 +73,7 @@ public struct BuildParameters {
     public let shouldLinkStaticSwiftStdlib: Bool
 
     /// Which compiler sanitizers should be enabled
-    public let sanitizers: EnabledSanitizers
+    public var sanitizers: EnabledSanitizers
 
     /// If should enable llbuild manifest caching.
     public let shouldEnableManifestCaching: Bool
@@ -562,6 +562,18 @@ public class BuildPlan {
              switch target.underlyingTarget {
              case is SwiftTarget:
                  targetMap[target] = .swift(SwiftTargetDescription(target: target, buildParameters: buildParameters))
+                 let targetPackage = graph.packages.first(where: { $0.targets.contains(target)} )!
+                 
+                 var fuzzedBuildParameters = buildParameters
+                 fuzzedBuildParameters.sanitizers.sanitizers.insert(.fuzzer)
+                 
+                 let buildParameters =
+                    (buildParameters.configuration.mode == .fuzz && targetPackage.fuzzedTargets.contains(target))
+                    ? fuzzedBuildParameters
+                    : buildParameters
+                 
+                 targetMap[target] = .swift(SwiftTargetDescription(target: target, buildParameters: buildParameters))
+
              case is ClangTarget:
                 targetMap[target] = try .clang(ClangTargetDescription(
                     target: target,
