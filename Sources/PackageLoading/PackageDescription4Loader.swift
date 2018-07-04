@@ -47,7 +47,19 @@ extension PackageDescription4.Package {
         if case .array(let array)? = package["targets"] {
             targets = array.map(PackageDescription4.Target.fromJSON)
         }
-
+        
+        // Parse the fuzzed targets.
+        var fuzzedTargets: [String] = []
+        if case .array(let array)? = package["fuzzed_targets"] {
+            fuzzedTargets = array.map {
+                if case .string(let v) = $0 {
+                    return v
+                } else {
+                    fatalError("fuzzed_targets must be an array of Strings")
+                }
+            }
+        }
+        
         // Parse the products.
         var products: [PackageDescription4.Product] = []
         if case .array(let array)? = package["products"] {
@@ -103,6 +115,7 @@ extension PackageDescription4.Package {
             products: products,
             dependencies: dependencies,
             targets: targets,
+            fuzzedTargets: fuzzedTargets,
             cLanguageStandard: cLanguageStandard,
             cxxLanguageStandard: cxxLanguageStandard
         )

@@ -230,6 +230,8 @@ private func createResolvedPackages(
         let targetBuilders = package.targets.map(ResolvedTargetBuilder.init(target:))
         packageBuilder.targets = targetBuilders
 
+        packageBuilder.fuzzedTargets = packageBuilder.targets.filter { package.fuzzedTargets.contains($0.target) }
+        
         // Establish dependencies between the targets. A target can only depend on another target present in the same package.
         let targetMap = targetBuilders.createDictionary({ ($0.target, $0) })
         for targetBuilder in targetBuilders {
@@ -416,6 +418,9 @@ private final class ResolvedPackageBuilder: ResolvedBuilder<ResolvedPackage> {
     /// The targets in the package.
     var targets: [ResolvedTargetBuilder] = []
 
+    /// The targets that need to be instrumented for fuzz-testing
+    var fuzzedTargets: [ResolvedTargetBuilder] = []
+
     /// The products in this package.
     var products: [ResolvedProductBuilder] = []
 
@@ -431,6 +436,7 @@ private final class ResolvedPackageBuilder: ResolvedBuilder<ResolvedPackage> {
             package: package,
             dependencies: dependencies.map({ $0.construct() }),
             targets: targets.map({ $0.construct() }),
+            fuzzedTargets: fuzzedTargets.map({ $0.construct() }),
             products: products.map({ $0.construct() })
         )
     }

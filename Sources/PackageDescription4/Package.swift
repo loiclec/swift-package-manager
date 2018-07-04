@@ -64,6 +64,9 @@ public final class Package {
     /// The list of targets.
     public var targets: [Target]
 
+    /// The targets that need to be instrumented for fuzz-testing
+    public var fuzzedTargets: [String]
+    
     /// The list of products vended by this package.
     public var products: [Product]
 
@@ -99,6 +102,7 @@ public final class Package {
         products: [Product] = [],
         dependencies: [Dependency] = [],
         targets: [Target] = [],
+        fuzzedTargets: [String] = [],
         swiftLanguageVersions: [SwiftVersion]? = nil,
         cLanguageStandard: CLanguageStandard? = nil,
         cxxLanguageStandard: CXXLanguageStandard? = nil
@@ -109,6 +113,7 @@ public final class Package {
         self.products = products
         self.dependencies = dependencies
         self.targets = targets
+        self.fuzzedTargets = fuzzedTargets
         self.swiftLanguageVersions = swiftLanguageVersions
         self.cLanguageStandard = cLanguageStandard
         self.cxxLanguageStandard = cxxLanguageStandard
@@ -123,6 +128,7 @@ public final class Package {
         products: [Product] = [],
         dependencies: [Dependency] = [],
         targets: [Target] = [],
+        fuzzedTargets: [String] = [],
         swiftLanguageVersions: [Int]? = nil,
         cLanguageStandard: CLanguageStandard? = nil,
         cxxLanguageStandard: CXXLanguageStandard? = nil
@@ -133,7 +139,8 @@ public final class Package {
         self.products = products
         self.dependencies = dependencies
         self.targets = targets
-
+        self.fuzzedTargets = fuzzedTargets
+        
       #if PACKAGE_DESCRIPTION_4
         /// The list of swift versions, this package is compatible with.
         self.swiftLanguageVersions = swiftLanguageVersions
@@ -240,6 +247,7 @@ extension Package {
         }
         dict["dependencies"] = .array(dependencies.map({ $0.toJSON() }))
         dict["targets"] = .array(targets.map({ $0.toJSON() }))
+        dict["fuzzed_targets"] = .array(fuzzedTargets.map(JSON.string))
         dict["products"] = .array(products.map({ $0.toJSON() }))
         if let providers = self.providers {
             dict["providers"] = .array(providers.map({ $0.toJSON() }))

@@ -250,6 +250,13 @@ public final class PackageBuilder {
     /// Build a new package following the conventions.
     public func construct() throws -> Package {
         let targets = try constructTargets()
+        let fuzzedTargets: [Target]
+        if case .v4(let package) = manifest.package {
+            fuzzedTargets = targets.filter { package.fuzzedTargets.contains($0.name) }
+        } else {
+            fuzzedTargets = []
+        }
+
         let products = try constructProducts(targets)
         // Find the special directory for targets.
         let targetSpecialDirs = findTargetSpecialDirs(targets)
@@ -258,6 +265,7 @@ public final class PackageBuilder {
             manifest: manifest,
             path: packagePath,
             targets: targets,
+            fuzzedTargets: fuzzedTargets,
             products: products,
             targetSearchPath: packagePath.appending(component: targetSpecialDirs.targetDir),
             testTargetSearchPath: packagePath.appending(component: targetSpecialDirs.testTargetDir)
