@@ -250,9 +250,9 @@ public final class PackageBuilder {
     /// Build a new package following the conventions.
     public func construct() throws -> Package {
         let targets = try constructTargets()
-        let fuzzedTargets: [Target]
+        let fuzzedTargets: [String]
         if case .v4(let package) = manifest.package {
-            fuzzedTargets = targets.filter { package.fuzzedTargets.contains($0.name) }
+            fuzzedTargets = package.fuzzedTargets
         } else {
             fuzzedTargets = []
         }

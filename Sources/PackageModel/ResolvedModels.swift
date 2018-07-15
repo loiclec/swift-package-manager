@@ -108,7 +108,7 @@ public final class ResolvedPackage: CustomStringConvertible, ObjectIdentifierPro
     public let targets: [ResolvedTarget]
 
     /// The targets that need to be instrumented for fuzz-testing
-    public let fuzzedTargets: [ResolvedTarget]
+    public let fuzzedTargets: [String]
     
     /// The products produced by the package.
     public let products: [ResolvedProduct]
@@ -120,7 +120,7 @@ public final class ResolvedPackage: CustomStringConvertible, ObjectIdentifierPro
         package: Package,
         dependencies: [ResolvedPackage],
         targets: [ResolvedTarget],
-        fuzzedTargets: [ResolvedTarget],
+        fuzzedTargets: [String],
         products: [ResolvedProduct]
     ) {
         self.underlyingPackage = package

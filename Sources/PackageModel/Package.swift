@@ -58,7 +58,7 @@ public final class Package {
     public let targets: [Target]
 
     /// The targets that need to be instrumented for fuzz-testing
-    public let fuzzedTargets: [Target]
+    public let fuzzedTargets: [String]
     
     /// The products produced by the package.
     public let products: [Product]
@@ -77,7 +77,7 @@ public final class Package {
         manifest: Manifest,
         path: AbsolutePath,
         targets: [Target],
-        fuzzedTargets: [Target],
+        fuzzedTargets: [String],
         products: [Product],
         targetSearchPath: AbsolutePath,
         testTargetSearchPath: AbsolutePath

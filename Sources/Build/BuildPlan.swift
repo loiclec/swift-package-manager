@@ -556,19 +556,29 @@ public class BuildPlan {
         self.delegate = delegate
         self.fileSystem = fileSystem
 
+
+        let allFuzzedTargets = graph.allTargets.flatMap { target -> [String] in
+            switch target.underlyingTarget {
+            case is SwiftTarget:
+                let targetPackage = graph.packages.first(where: { $0.targets.contains(target)} )!
+                return targetPackage.fuzzedTargets
+            default:
+                return []
+            }
+        }
+        
         // Create build target description for each target which we need to plan.
         var targetMap = [ResolvedTarget: TargetDescription]()
         for target in graph.allTargets {
              switch target.underlyingTarget {
              case is SwiftTarget:
                  targetMap[target] = .swift(SwiftTargetDescription(target: target, buildParameters: buildParameters))
-                 let targetPackage = graph.packages.first(where: { $0.targets.contains(target)} )!
                  
                  var fuzzedBuildParameters = buildParameters
                  fuzzedBuildParameters.sanitizers.sanitizers.insert(.fuzzer)
                  
                  let buildParameters =
-                    (buildParameters.configuration.mode == .fuzz && targetPackage.fuzzedTargets.contains(target))
+                    (buildParameters.configuration.mode == .fuzz && allFuzzedTargets.contains(target.name))
                     ? fuzzedBuildParameters
                     : buildParameters
                  
