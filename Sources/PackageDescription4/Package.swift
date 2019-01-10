@@ -98,7 +98,12 @@ public final class Package {
 
     /// The C++ language standard to use for all C++ targets in this package.
     public var cxxLanguageStandard: CXXLanguageStandard?
-
+    
+    #if !PACKAGE_DESCRIPTION_4
+    // TODO: doc
+    public var instrumentationSettings: [InstrumentationSetting]
+    #endif
+    
   #if PACKAGE_DESCRIPTION_4
     /// Construct a package.
     public init(
@@ -135,7 +140,8 @@ public final class Package {
         targets: [Target] = [],
         swiftLanguageVersions: [SwiftVersion]? = nil,
         cLanguageStandard: CLanguageStandard? = nil,
-        cxxLanguageStandard: CXXLanguageStandard? = nil
+        cxxLanguageStandard: CXXLanguageStandard? = nil,
+        instrumentationSettings: [InstrumentationSetting] = []
     ) {
         self.name = name
         self.platforms = platforms
@@ -147,6 +153,7 @@ public final class Package {
         self.swiftLanguageVersions = swiftLanguageVersions
         self.cLanguageStandard = cLanguageStandard
         self.cxxLanguageStandard = cxxLanguageStandard
+        self.instrumentationSettings = instrumentationSettings
         registerExitHandler()
     }
   #endif
@@ -212,6 +219,7 @@ extension Package: Encodable {
         case swiftLanguageVersions
         case cLanguageStandard
         case cxxLanguageStandard
+        case instrumentationSettings
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -236,6 +244,7 @@ extension Package: Encodable {
         try container.encode(slv, forKey: .swiftLanguageVersions)
       #else
         try container.encode(swiftLanguageVersions, forKey: .swiftLanguageVersions)
+        try container.encode(instrumentationSettings, forKey: .instrumentationSettings)
       #endif
         try container.encode(cLanguageStandard, forKey: .cLanguageStandard)
         try container.encode(cxxLanguageStandard, forKey: .cxxLanguageStandard)

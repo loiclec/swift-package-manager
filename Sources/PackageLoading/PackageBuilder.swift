@@ -784,7 +784,7 @@ public final class PackageBuilder {
             var assignment = BuildSettings.Assignment()
             assignment.value = setting.value
 
-            if let config = setting.condition?.config.map({ BuildConfiguration(rawValue: $0)! }) {
+            if let config = setting.condition?.config {
                 let condition = BuildSettings.ConfigurationCondition(config)
                 assignment.conditions.append(condition)
             }

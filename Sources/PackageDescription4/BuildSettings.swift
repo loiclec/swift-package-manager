@@ -8,19 +8,75 @@
  See http://swift.org/CONTRIBUTORS.txt for Swift project authors
 */
 
-/// The build configuration such as debug or release.
-public struct BuildConfiguration: Encodable {
-    private let config: String
+public enum BuildConfiguration: Equatable {
+    case debug
+    case release
+    indirect case custom(name: String, base: BuildConfiguration?)
+}
 
-    private init(_ config: String) {
-        self.config = config
+extension BuildConfiguration: RawRepresentable, Codable {
+    public typealias RawValue = String
+    
+    public init?(rawValue: String) {
+        let components = rawValue.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: true)
+        switch components.count {
+        case 0:
+            return nil
+        case 1:
+            switch components.first! {
+            case "debug"  : self = .debug
+            case "release": self = .release
+            default       : return nil
+            }
+        case 2:
+            let fst = components.first!
+            guard
+                fst != "debug",
+                fst != "release"
+            else {
+                return nil
+            }
+            self = .custom(name: String(fst), base: BuildConfiguration(rawValue: String(components[1])))
+        default:
+            fatalError()
+        }
     }
+    
+    public var rawValue: String {
+        switch self {
+        case .debug: return "debug"
+        case .release: return "release"
+        case .custom(name: let name, base: let base):
+            if let base = base {
+                return name + "-" + base.rawValue
+            } else {
+                return name
+            }
+        }
+    }
+}
 
-    /// The debug build configuration.
-    public static let debug: BuildConfiguration = BuildConfiguration("debug")
+extension BuildConfiguration: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+        self.init(rawValue: value)!
+    }
+}
 
-    /// The release build configuration.
-    public static let release: BuildConfiguration = BuildConfiguration("release")
+extension BuildConfiguration {
+    
+    public func refines(_ configuration: BuildConfiguration) -> Bool {
+        guard self != configuration else {
+            return true
+        }
+        switch self {
+        case .debug, .release:
+            return false
+        case .custom(name: _, base: let base?):
+            return base.refines(configuration)
+        case .custom(name: _, base: nil):
+            return false
+        }
+    }
 }
 
 /// A build setting condition.

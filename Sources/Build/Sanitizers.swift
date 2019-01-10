@@ -14,6 +14,7 @@ import Utility
 /// Available runtime sanitizers.
 public enum Sanitizer: String {
     case address
+    case fuzzer
     case thread
     case undefined
 
@@ -21,6 +22,7 @@ public enum Sanitizer: String {
     public var shortName: String {
         switch self {
             case .address: return "asan"
+            case .fuzzer: return "fuzzer"
             case .thread: return "tsan"
             case .undefined: return "ubsan"
         }
@@ -30,7 +32,7 @@ public enum Sanitizer: String {
 /// A set of enabled runtime sanitizers.
 public struct EnabledSanitizers {
     /// A set of enabled sanitizers.
-    public let sanitizers: Set<Sanitizer>
+    public var sanitizers: Set<Sanitizer>
 
     public init(_ sanitizers: Set<Sanitizer> = []) {
         // FIXME: We need to throw from here if given sanitizers can't be

@@ -28,7 +28,9 @@ extension ManifestBuilder {
 
         self.cxxLanguageStandard = package.get("cxxLanguageStandard")
         self.cLanguageStandard = package.get("cLanguageStandard")
-
+    
+        self.instrumentationSettings = try parseInstrumentationSettings(package)
+        
         self.errors = try json.get("errors")
     }
 
@@ -164,10 +166,26 @@ extension ManifestBuilder {
         let platformNames: [String]? = try? json.getArray("platforms").map({ try $0.get("name") })
         return .init(
             platformNames: platformNames ?? [],
-            config: try? json.get("config").get("config")
+            config: try? BuildConfiguration(rawValue: json.get("config"))!
         )
     }
+    
+    func parseInstrumentationSetting(_ json: JSON) throws -> InstrumentationSetting {
+        let kind = InstrumentationSetting.Kind.coverage // FIXME
+        let targets = try json.get("targets") as [String]
+        let rawConfig: String = try json.get("configuration")
+        let configuration = try BuildConfiguration(rawValue: rawConfig)!
+        return InstrumentationSetting(kind: .coverage, targets: targets, configuration: configuration)
+    }
+    
+    func parseInstrumentationSettings(_ json: JSON) throws -> [InstrumentationSetting] {
+        guard let jsons = try? json.getArray("instrumentationSettings") else {
+            return []
+        }
+        return try jsons.map(parseInstrumentationSetting)
+    }
 }
+
 
 struct VersionedValue: JSONMappable {
     let supportedVersions: [ManifestVersion]

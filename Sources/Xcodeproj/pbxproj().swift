@@ -788,6 +788,8 @@ func appendSetting(
             table.debug.SWIFT_ACTIVE_COMPILATION_CONDITIONS += value
         case .release?:
             table.release.SWIFT_ACTIVE_COMPILATION_CONDITIONS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.SWIFT_ACTIVE_COMPILATION_CONDITIONS += value
         }
@@ -798,6 +800,8 @@ func appendSetting(
             table.debug.OTHER_SWIFT_FLAGS += value
         case .release?:
             table.release.OTHER_SWIFT_FLAGS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.OTHER_SWIFT_FLAGS += value
         }
@@ -808,6 +812,8 @@ func appendSetting(
             table.debug.GCC_PREPROCESSOR_DEFINITIONS += value
         case .release?:
             table.release.GCC_PREPROCESSOR_DEFINITIONS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.GCC_PREPROCESSOR_DEFINITIONS += value
         }
@@ -817,6 +823,8 @@ func appendSetting(
             table.debug.HEADER_SEARCH_PATHS += value
         case .release?:
             table.release.HEADER_SEARCH_PATHS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.HEADER_SEARCH_PATHS += value
         }
@@ -826,6 +834,8 @@ func appendSetting(
             table.debug.OTHER_CFLAGS += value
         case .release?:
             table.release.OTHER_CFLAGS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.OTHER_CFLAGS += value
         }
@@ -837,6 +847,8 @@ func appendSetting(
             table.debug.OTHER_LDFLAGS += value
         case .release?:
             table.release.OTHER_LDFLAGS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.OTHER_LDFLAGS += value
         }
@@ -848,6 +860,8 @@ func appendSetting(
             table.debug.OTHER_LDFLAGS += value
         case .release?:
             table.release.OTHER_LDFLAGS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.OTHER_LDFLAGS += value
         }
@@ -859,6 +873,8 @@ func appendSetting(
             table.debug.OTHER_LDFLAGS += value
         case .release?:
             table.release.OTHER_LDFLAGS += value
+        case .some(_):
+            fatalError()
         case nil:
             table.common.OTHER_LDFLAGS += value
         }

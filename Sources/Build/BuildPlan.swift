@@ -126,7 +126,7 @@ public struct BuildParameters {
     public let shouldLinkStaticSwiftStdlib: Bool
 
     /// Which compiler sanitizers should be enabled
-    public let sanitizers: EnabledSanitizers
+    public var sanitizers: EnabledSanitizers
 
     /// If should enable llbuild manifest caching.
     public let shouldEnableManifestCaching: Bool
@@ -386,15 +386,16 @@ public final class ClangTargetBuildDescription {
 
     /// Optimization arguments according to the build configuration.
     private var optimizationArguments: [String] {
-        switch buildParameters.configuration {
-        case .debug:
+        if buildParameters.configuration.refines(.debug) {
             if buildParameters.triple.isWindows() {
                 return ["-g", "-gcodeview", "-O0"]
             } else {
                 return ["-g", "-O0"]
             }
-        case .release:
+        } else if buildParameters.configuration.refines(.release) {
             return ["-O2"]
+        } else {
+            return []
         }
     }
 
@@ -402,11 +403,13 @@ public final class ClangTargetBuildDescription {
     private var activeCompilationConditions: [String] {
         var compilationConditions = ["-DSWIFT_PACKAGE=1"]
 
-        switch buildParameters.configuration {
-        case .debug:
+        if buildParameters.configuration.refines(.debug) {
             compilationConditions += ["-DDEBUG=1"]
-        case .release:
-            break
+        } else if buildParameters.configuration.refines(.release) {
+            
+        }
+        else {
+            
         }
 
         return compilationConditions
@@ -490,10 +493,12 @@ public final class SwiftTargetBuildDescription {
         //
         // Technically, it should be enabled whenever WMO is off but we
         // don't currently make that distinction in SwiftPM
-        switch buildParameters.configuration {
-        case .debug:
+        if buildParameters.configuration.refines(.debug) {
             args += ["-enable-batch-mode"]
-        case .release: break
+        } else if buildParameters.configuration.refines(.release) {
+        
+        } else {
+        
         }
 
         args += buildParameters.indexStoreArguments
@@ -562,23 +567,25 @@ public final class SwiftTargetBuildDescription {
     private var activeCompilationConditions: [String] {
         var compilationConditions = ["-DSWIFT_PACKAGE"]
 
-        switch buildParameters.configuration {
-        case .debug:
+        if buildParameters.configuration.refines(.debug) {
             compilationConditions += ["-DDEBUG"]
-        case .release:
-            break
+        } else if buildParameters.configuration.refines(.release) {
+            
+        } else {
+            
         }
-
+        
         return compilationConditions
     }
 
     /// Optimization arguments according to the build configuration.
     private var optimizationArguments: [String] {
-        switch buildParameters.configuration {
-        case .debug:
+        if buildParameters.configuration.refines(.debug) {
             return ["-Onone", "-g", "-enable-testing"]
-        case .release:
+        } else if buildParameters.configuration.refines(.release) {
             return ["-O"]
+        } else {
+            return []
         }
     }
 
@@ -838,13 +845,35 @@ public class BuildPlan {
         // Create build target description for each target which we need to plan.
         var targetMap = [ResolvedTarget: TargetBuildDescription]()
         for target in graph.allTargets {
+
+            var targetSpecificBuildParameters = buildParameters
+            
+            let rootPackage = graph.rootPackages[0]
+            if rootPackage.targets.contains(target) {
+                print("root package contains \(target.name)")
+                for setting in rootPackage.manifest.instrumentationSettings {
+                    print("evaluating setting \(setting)")
+                    print("build config: \(buildParameters.configuration)")
+                    if
+                        setting.configuration == buildParameters.configuration,
+                        setting.targets.contains(where: { target.name == $0 })
+                    {
+                        switch setting.kind {
+                        case .coverage:
+                            print("adding the fuzzer sanitizer")
+                            targetSpecificBuildParameters.sanitizers.sanitizers.insert(.fuzzer)
+                        }
+                    }
+                }
+            }
+            
              switch target.underlyingTarget {
              case is SwiftTarget:
-                 targetMap[target] = .swift(SwiftTargetBuildDescription(target: target, buildParameters: buildParameters))
+                 targetMap[target] = .swift(SwiftTargetBuildDescription(target: target, buildParameters: targetSpecificBuildParameters))
              case is ClangTarget:
                 targetMap[target] = try .clang(ClangTargetBuildDescription(
                     target: target,
-                    buildParameters: buildParameters,
+                    buildParameters: targetSpecificBuildParameters,
                     fileSystem: fileSystem))
              case is SystemLibraryTarget:
                  break

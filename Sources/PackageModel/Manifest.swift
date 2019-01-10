@@ -111,6 +111,9 @@ public final class Manifest: ObjectIdentifierProtocol, CustomStringConvertible, 
     /// The system package providers of a system package.
     public let providers: [SystemPackageProviderDescription]?
 
+    // TODO: doc
+    public let instrumentationSettings: [InstrumentationSetting]
+    
     public init(
         name: String,
         platforms: [PlatformDescription],
@@ -125,7 +128,8 @@ public final class Manifest: ObjectIdentifierProtocol, CustomStringConvertible, 
         swiftLanguageVersions: [SwiftLanguageVersion]? = nil,
         dependencies: [PackageDependencyDescription] = [],
         products: [ProductDescription] = [],
-        targets: [TargetDescription] = []
+        targets: [TargetDescription] = [],
+        instrumentationSettings: [InstrumentationSetting]
     ) {
         self.name = name
         self.platforms = platforms
@@ -141,6 +145,7 @@ public final class Manifest: ObjectIdentifierProtocol, CustomStringConvertible, 
         self.dependencies = dependencies
         self.products = products
         self.targets = targets
+        self.instrumentationSettings = instrumentationSettings
     }
 
     public var description: String {
@@ -175,6 +180,7 @@ extension Manifest {
         try container.encode(dependencies, forKey: .dependencies)
         try container.encode(products, forKey: .products)
         try container.encode(targets, forKey: .targets)
+        try container.encode(instrumentationSettings, forKey: .instrumentationSettings)
     }
 }
 
@@ -366,9 +372,9 @@ public enum TargetBuildSettingDescription {
     public struct Condition: Codable, Equatable {
 
         public let platformNames: [String]
-        public let config: String?
+        public let config: BuildConfiguration?
 
-        public init(platformNames: [String] = [], config: String? = nil) {
+        public init(platformNames: [String] = [], config: BuildConfiguration? = nil) {
             assert(!(platformNames.isEmpty && config == nil))
             self.platformNames = platformNames
             self.config = config
@@ -434,5 +440,25 @@ public enum TargetBuildSettingDescription {
             self.value = value
             self.condition = condition
         }
+    }
+}
+
+public struct InstrumentationSetting: Codable {
+    public enum Kind: String, Codable {
+        case coverage
+    }
+    
+    public let kind: Kind
+    public let targets: [String]
+    public let configuration: BuildConfiguration
+    
+    public init(kind: Kind, targets: [String], configuration: BuildConfiguration) {
+        self.kind = kind
+        self.targets = targets
+        self.configuration = configuration
+    }
+    
+    public static func coverage(forTargets targets: [String], configuration: BuildConfiguration) -> InstrumentationSetting {
+        return InstrumentationSetting(kind: .coverage, targets: targets, configuration: configuration)
     }
 }

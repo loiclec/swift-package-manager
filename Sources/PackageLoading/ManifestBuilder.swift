@@ -22,7 +22,8 @@ struct ManifestBuilder {
     var products: [ProductDescription] = []
     var cxxLanguageStandard: String?
     var cLanguageStandard: String?
-
+    var instrumentationSettings: [InstrumentationSetting] = []
+    
     let manifestVersion: ManifestVersion
     let baseURL: String
     let fs: FileSystem
