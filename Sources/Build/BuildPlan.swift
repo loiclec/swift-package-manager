@@ -850,17 +850,13 @@ public class BuildPlan {
             
             let rootPackage = graph.rootPackages[0]
             if rootPackage.targets.contains(target) {
-                print("root package contains \(target.name)")
                 for setting in rootPackage.manifest.instrumentationSettings {
-                    print("evaluating setting \(setting)")
-                    print("build config: \(buildParameters.configuration)")
                     if
                         setting.configuration == buildParameters.configuration,
                         setting.targets.contains(where: { target.name == $0 })
                     {
                         switch setting.kind {
                         case .coverage:
-                            print("adding the fuzzer sanitizer")
                             targetSpecificBuildParameters.sanitizers.sanitizers.insert(.fuzzer)
                         }
                     }

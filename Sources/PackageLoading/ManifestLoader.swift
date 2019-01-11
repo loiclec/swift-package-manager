@@ -206,7 +206,6 @@ public final class ManifestLoader: ManifestLoaderProtocol {
         fileSystem: FileSystem? = nil,
         diagnostics: DiagnosticsEngine? = nil
     ) throws -> Manifest {
-        print("path of manifest: \(inputPath)")
         // Inform the delegate.
         self.delegate?.willLoad(manifest: inputPath)
 
@@ -278,7 +277,6 @@ public final class ManifestLoader: ManifestLoaderProtocol {
         fs: FileSystem? = nil,
         diagnostics: DiagnosticsEngine? = nil
     ) throws -> String {
-        print("load json string \(inputPath)")
         // If we were given a filesystem, load via a temporary file.
         if let fs = fs {
             let contents = try fs.readFileContents(inputPath)
@@ -288,16 +286,16 @@ public final class ManifestLoader: ManifestLoaderProtocol {
         }
 
         // Load directly if manifest caching is not enabled.
-        //if !self.isManifestCachingEnabled {
+        if !self.isManifestCachingEnabled {
             return try parse(path: inputPath, manifestVersion: manifestVersion, diagnostics: diagnostics)
-        //}
-        /*
+        }
+
         // Otherwise load via llbuild.
         let key = ManifestLoadRule.RuleKey(
             path: inputPath, manifestVersion: manifestVersion)
         let value = try getEngine().build(key: key)
 
-        return try value.dematerialize()*/
+        return try value.dematerialize()
     }
 
     /// Parse the manifest at the given path to JSON.
@@ -356,7 +354,6 @@ public final class ManifestLoader: ManifestLoaderProtocol {
         } else if let output = output {
             diagnostics?.emit(data: ManifestLoadingDiagnostic(output: output))
         }
-        print("file path: \(file.path)")
         guard let json = try localFileSystem.readFileContents(file.path).asString else {
             throw StringError("the manifest has invalid encoding")
         }
