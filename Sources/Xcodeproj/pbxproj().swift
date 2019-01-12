@@ -620,8 +620,28 @@ func xcodeProject(
                         continue
                     }
                 }
-                let config = assignment.conditions.compactMap({ $0 as? BuildSettings.ConfigurationCondition }).first?.config
+                let config = assignment.conditions.compactMap({ $0 as? BuildSettings.ConfigurationCondition }).first?.config ?? .common
                 appendSetting(assignment.value, forDecl: decl, to: xcodeTarget.buildSettings, config: config)
+            }
+        }
+    }
+
+    for (target, xcodeTarget) in modulesToTargets {
+        for instrumentationSetting in graph.rootPackages[0].manifest.instrumentationSettings {
+            let config = instrumentationSetting.configuration
+            if xcodeTarget.buildSettings.table[config] == nil {
+               xcodeTarget.buildSettings.table[config] = Xcode.BuildSettingsTable.BuildSettings()
+            }
+            if instrumentationSetting.targets.contains(target.name) {
+                appendSetting(["-sanitize=fuzzer"], forDecl: .OTHER_SWIFT_FLAGS, to: xcodeTarget.buildSettings, config: config)
+            }
+        }
+    }
+    
+    for (_, xcodeTarget) in modulesToTargets {
+        for (key, _) in xcodeTarget.buildSettings.table {
+            if projectSettings.table[key] == nil {
+                projectSettings.table[key] = .init()
             }
         }
     }
@@ -762,13 +782,18 @@ private extension ResolvedTarget {
 private extension SwiftLanguageVersion {
     /// Returns the build setting value for the given Swift language version.
     var xcodeBuildSettingValue: String {
+        // 5.0 not supported by xcode yer
+        
+        return "4.2"
+        /*
         // Swift version setting are represented differently in Xcode:
         // 3 -> 3.0, 4 -> 4.0, 4.2 -> 4.2
         var swiftVersion = "\(rawValue)"
+        
         if !rawValue.contains(".") {
             swiftVersion += ".0"
         }
-        return swiftVersion
+        return swiftVersion*/
     }
 }
 
@@ -777,107 +802,36 @@ func appendSetting(
     _ value: [String],
     forDecl decl: BuildSettings.Declaration,
     to table: Xcode.BuildSettingsTable,
-    config: BuildConfiguration? = nil
+    config: BuildConfiguration
 ) {
     switch decl {
     // FIXME: This switch case is kind of sad but we need to convert Xcode's
     // build model to be of reference type in order to avoid it.
     case .SWIFT_ACTIVE_COMPILATION_CONDITIONS:
-        switch config {
-        case .debug?:
-            table.debug.SWIFT_ACTIVE_COMPILATION_CONDITIONS += value
-        case .release?:
-            table.release.SWIFT_ACTIVE_COMPILATION_CONDITIONS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.SWIFT_ACTIVE_COMPILATION_CONDITIONS += value
-        }
+        table.table[config]!.SWIFT_ACTIVE_COMPILATION_CONDITIONS += value
 
     case .OTHER_SWIFT_FLAGS:
-        switch config {
-        case .debug?:
-            table.debug.OTHER_SWIFT_FLAGS += value
-        case .release?:
-            table.release.OTHER_SWIFT_FLAGS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.OTHER_SWIFT_FLAGS += value
-        }
+        table.table[config]!.OTHER_SWIFT_FLAGS += value
 
     case .GCC_PREPROCESSOR_DEFINITIONS:
-        switch config {
-        case .debug?:
-            table.debug.GCC_PREPROCESSOR_DEFINITIONS += value
-        case .release?:
-            table.release.GCC_PREPROCESSOR_DEFINITIONS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.GCC_PREPROCESSOR_DEFINITIONS += value
-        }
+        table.table[config]!.GCC_PREPROCESSOR_DEFINITIONS += value
+        
     case .HEADER_SEARCH_PATHS:
-        switch config {
-        case .debug?:
-            table.debug.HEADER_SEARCH_PATHS += value
-        case .release?:
-            table.release.HEADER_SEARCH_PATHS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.HEADER_SEARCH_PATHS += value
-        }
+        table.table[config]!.HEADER_SEARCH_PATHS += value
+        
     case .OTHER_CFLAGS:
-        switch config {
-        case .debug?:
-            table.debug.OTHER_CFLAGS += value
-        case .release?:
-            table.release.OTHER_CFLAGS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.OTHER_CFLAGS += value
-        }
-
+        table.table[config]!.OTHER_CFLAGS += value
 
     case .OTHER_LDFLAGS:
-        switch config {
-        case .debug?:
-            table.debug.OTHER_LDFLAGS += value
-        case .release?:
-            table.release.OTHER_LDFLAGS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.OTHER_LDFLAGS += value
-        }
+        table.table[config]!.OTHER_LDFLAGS += value
+        
     case .LINK_LIBRARIES:
         let value = value.map({ "-l" + $0 })
-
-        switch config {
-        case .debug?:
-            table.debug.OTHER_LDFLAGS += value
-        case .release?:
-            table.release.OTHER_LDFLAGS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.OTHER_LDFLAGS += value
-        }
+        table.table[config]!.OTHER_LDFLAGS += value
+        
     case .LINK_FRAMEWORKS:
         let value = value.flatMap({ ["-framework", $0] })
-
-        switch config {
-        case .debug?:
-            table.debug.OTHER_LDFLAGS += value
-        case .release?:
-            table.release.OTHER_LDFLAGS += value
-        case .some(_):
-            fatalError()
-        case nil:
-            table.common.OTHER_LDFLAGS += value
-        }
+        table.table[config]!.OTHER_LDFLAGS += value
 
     default:
         fatalError("Unhandled decl \(decl)")

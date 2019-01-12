@@ -54,6 +54,8 @@
    references
 */
 
+import PackageModel
+
 public struct Xcode {
 
     /// An Xcode project, consisting of a tree of groups and file references,
@@ -316,18 +318,35 @@ public struct Xcode {
     /// overlay settings for Debug and Release builds.  There can also be a
     /// file reference to an .xcconfig file on which to base the settings.
     public class BuildSettingsTable {
-        /// Common build settings are in both generated configurations (Debug
-        /// and Release).
-        var common = BuildSettings()
-
-        /// Debug build settings are overlaid over the common settings in the
-        /// generated Debug configuration.
-        var debug = BuildSettings()
-
-        /// Release build settings are overlaid over the common settings in the
-        /// generated Release configuration.
-        var release = BuildSettings()
-
+        
+        var table: [BuildConfiguration: BuildSettings] = [
+            .common : BuildSettings(),
+            .debug: BuildSettings(),
+            .release: BuildSettings()
+        ]
+        
+        var common: BuildSettings {
+            get { return table[.common]! }
+            _modify { yield &table[.common]! }
+        }
+        var debug: BuildSettings {
+            get { return table[.debug]! }
+            _modify { yield &table[.debug]! }
+        }
+        var release: BuildSettings {
+            get { return table[.release]! }
+            _modify { yield &table[.release]! }
+        }
+//        
+//        subscript(key: Key) -> BuildSettings {
+//            get {
+//                return table[key]!
+//            }
+//            _modify {
+//                yield &table[key]!
+//            }
+//        }
+        
         /// An optional file reference to an .xcconfig file.
         var xcconfigFileRef: FileReference?
 

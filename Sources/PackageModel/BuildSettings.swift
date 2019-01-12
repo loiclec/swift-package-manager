@@ -10,11 +10,12 @@
 
 import Basic
 
-
-public enum BuildConfiguration: Equatable {
-    case debug
-    case release
-    indirect case custom(name: String, base: BuildConfiguration?)
+public enum BuildConfiguration: Equatable, Hashable {
+    case common
+    indirect case other(name: String, base: BuildConfiguration)
+    
+    public static let debug: BuildConfiguration = .other(name: "debug", base: common)
+    public static let release: BuildConfiguration = .other(name: "release", base: common)
 }
 
 extension BuildConfiguration: RawRepresentable, Codable {
@@ -24,22 +25,15 @@ extension BuildConfiguration: RawRepresentable, Codable {
         let components = rawValue.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: true)
         switch components.count {
         case 0:
-            return nil
+            self = .common
         case 1:
             switch components.first! {
-            case "debug"  : self = .debug
-            case "release": self = .release
-            default       : return nil
+            case "common": self = .common
+            default: self = .other(name: String(components.first!), base: .common)
             }
         case 2:
             let fst = components.first!
-            guard
-                fst != "debug",
-                fst != "release"
-                else {
-                    return nil
-            }
-            self = .custom(name: String(fst), base: BuildConfiguration(rawValue: String(components[1])))
+            self = .other(name: String(fst), base: BuildConfiguration(rawValue: String(components[1]))!)
         default:
             fatalError()
         }
@@ -47,41 +41,52 @@ extension BuildConfiguration: RawRepresentable, Codable {
     
     public var rawValue: String {
         switch self {
-        case .debug: return "debug"
-        case .release: return "release"
-        case .custom(name: let name, base: let base):
-            if let base = base {
-                return name + "-" + base.rawValue
-            } else {
-                return name
-            }
+        case .common: return "common"
+        case .other(name: let name, base: let base):
+            return name + "-" + base.rawValue
         }
     }
 }
 
 extension BuildConfiguration {
-    public func contains(_ configuration: BuildConfiguration) -> Bool {
-        return self.rawValue.contains(configuration.rawValue)
-    }
-    
     public func refines(_ configuration: BuildConfiguration) -> Bool {
         guard self != configuration else {
             return true
         }
         switch self {
-        case .debug, .release:
+        case .common:
             return false
-        case .custom(name: _, base: let base?):
+        case .other(name: _, base: let base):
             return base.refines(configuration)
-        case .custom(name: _, base: nil):
-            return false
         }
+    }
+}
+
+extension BuildConfiguration: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+        self.init(rawValue: value)!
     }
 }
 
 extension BuildConfiguration {
     public var dirname: String {
-        return rawValue
+        switch self {
+        case .common: return ""
+        case .other(name: let name, base: .common):
+            return name
+        case .other(name: let name, base: let base):
+            return name + "-" + base.dirname
+        }
+    }
+}
+
+extension BuildConfiguration {
+    public func refinedConfigurations() -> [BuildConfiguration] {
+        switch self {
+        case .common: return []
+        case .other(name: _, base: let base):
+            return [base] + base.refinedConfigurations()
+        }
     }
 }
 

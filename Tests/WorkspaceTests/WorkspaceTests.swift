@@ -1762,7 +1762,8 @@ final class WorkspaceTests: XCTestCase {
             version: manifest.version,
             manifestVersion: manifest.manifestVersion,
             dependencies: [PackageDependencyDescription(url: manifest.dependencies[0].url, requirement: .exact("1.5.0"))],
-            targets: manifest.targets
+            targets: manifest.targets,
+            instrumentationSettings: []
         )
 
         workspace.checkPackageGraph(roots: ["Foo"]) { (_, diagnostics) in

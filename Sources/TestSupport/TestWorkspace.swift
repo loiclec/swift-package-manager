@@ -104,7 +104,8 @@ public final class TestWorkspace {
                     manifestVersion: .v4,
                     dependencies: package.dependencies.map({ $0.convert(baseURL: packagesDir) }),
                     products: package.products.map({ ProductDescription(name: $0.name, type: .library(.automatic), targets: $0.targets) }),
-                    targets: package.targets.map({ $0.convert() })
+                    targets: package.targets.map({ $0.convert() }),
+                    instrumentationSettings: []
                 )
                 if let version = version {
                     try repo.tag(name: version)

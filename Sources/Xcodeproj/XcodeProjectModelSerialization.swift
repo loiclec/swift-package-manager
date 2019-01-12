@@ -308,19 +308,16 @@ extension Xcode.BuildSettingsTable: PropertyListSerializable {
         /// model's identity-based XCBuildConfiguration objects.
         class BuildSettingsDictWrapper: PropertyListSerializable {
             let name: String
-            var baseSettings: BuildSettings
-            var overlaySettings: BuildSettings
+            var settings: [BuildSettings]
             let xcconfigFileRef: Xcode.FileReference?
 
             init(
                 name: String,
-                baseSettings: BuildSettings,
-                overlaySettings: BuildSettings,
+                settings: [BuildSettings],
                 xcconfigFileRef: Xcode.FileReference?
             ) {
                 self.name = name
-                self.baseSettings = baseSettings
-                self.overlaySettings = overlaySettings
+                self.settings = settings
                 self.xcconfigFileRef = xcconfigFileRef
             }
 
@@ -331,8 +328,8 @@ extension Xcode.BuildSettingsTable: PropertyListSerializable {
                 dict["name"] = .string(name)
                 // Combine the base settings and the overlay settings.
                 dict["buildSettings"] = combineBuildSettingsPropertyLists(
-                    baseSettings: baseSettings.asPropertyList(),
-                    overlaySettings: overlaySettings.asPropertyList())
+                    settings: settings.map { $0.asPropertyList() }
+                )
                 // Add a reference to the base configuration, if there is one.
                 if let xcconfigFileRef = xcconfigFileRef {
                     dict["baseConfigurationReference"] = .identifier(serializer.id(of: xcconfigFileRef))
@@ -344,24 +341,32 @@ extension Xcode.BuildSettingsTable: PropertyListSerializable {
         // Create a `XCConfigurationList` plist dictionary.
         var dict = [String: PropertyList]()
         dict["isa"] = .string("XCConfigurationList")
-        dict["buildConfigurations"] = .array([
-            // We use a private wrapper to "objectify" our two build settings
-            // structures (which, being structs, are value types).
-            .identifier(serializer.serialize(object: BuildSettingsDictWrapper(
-                name: "Debug",
-                baseSettings: common,
-                overlaySettings: debug,
-                xcconfigFileRef: xcconfigFileRef))),
-            .identifier(serializer.serialize(object: BuildSettingsDictWrapper(
-                name: "Release",
-                baseSettings: common,
-                overlaySettings: release,
-                xcconfigFileRef: xcconfigFileRef))),
-        ])
+        
+        var settings: [PropertyList] = []
+        
+        for (key, value) in table {
+            switch key {
+            case .common:
+                continue
+            case .other(_):
+                let readableName = key.rawValue
+                settings.append(
+                    .identifier(serializer.serialize(object: BuildSettingsDictWrapper(
+                        name: readableName,
+                        settings: key.refinedConfigurations().map { table[$0]! } + [value],
+                        xcconfigFileRef: xcconfigFileRef))
+                    )
+                )
+            }
+        }
+        
+        dict["buildConfigurations"] = .array(settings)
+        
+        
         // FIXME: What is this, and why are we setting it?
         dict["defaultConfigurationIsVisible"] = .string("0")
         // FIXME: Should we allow this to be set in the model?
-        dict["defaultConfigurationName"] = .string("Release")
+        dict["defaultConfigurationName"] = .string("release-common")
         return dict
     }
 }
@@ -426,27 +431,25 @@ extension Xcode.BuildSettingsTable.BuildSettings: PropertyListDictionaryConverti
 
 /// Private helper function that combines a base property list and an overlay
 /// property list, respecting the semantics of `$(inherited)` as we go.
-fileprivate func combineBuildSettingsPropertyLists(
-    baseSettings: PropertyList,
-    overlaySettings: PropertyList
-) -> PropertyList {
+fileprivate func combineBuildSettingsPropertyLists(settings: [PropertyList]) -> PropertyList {
     // Extract the base and overlay dictionaries.
-    guard case let .dictionary(baseDict) = baseSettings else {
-        preconditionFailure("base settings plist must be a dictionary")
-    }
-    guard case let .dictionary(overlayDict) = overlaySettings else {
-        preconditionFailure("overlay settings plist must be a dictionary")
-    }
 
-    // Iterate over the overlay values and apply them to the base.
-    var resultDict = baseDict
-    for (name, value) in overlayDict {
-        if let array = baseDict[name]?.array, let overlayArray = value.array, overlayArray.first?.string == "$(inherited)" {
-            resultDict[name] = .array(array + overlayArray.dropFirst())
-        } else {
-            resultDict[name] = value
+    var resultDict: [String: PropertyList] = [:]
+
+    for settings in settings.reversed() {
+        guard case let .dictionary(dict) = settings else {
+            preconditionFailure("settings plist must be a dictionary")
+        }
+        // Iterate over the overlay values and apply them to the base.
+        for (name, value) in dict {
+            if let array = resultDict[name]?.array, let overlayArray = value.array, overlayArray.first?.string == "$(inherited)" {
+                resultDict[name] = .array(array + overlayArray.dropFirst())
+            } else {
+                resultDict[name] = value
+            }
         }
     }
+    
     return .dictionary(resultDict)
 }
 

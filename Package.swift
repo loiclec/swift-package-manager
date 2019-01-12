@@ -139,7 +139,7 @@ let package = Package(
         .target(
             /** Generates Xcode projects */
             name: "Xcodeproj",
-            dependencies: ["Basic", "PackageGraph"]),
+            dependencies: ["Basic", "PackageGraph", "PackageModel"]),
         .target(
             /** High level functionality */
             name: "Workspace",

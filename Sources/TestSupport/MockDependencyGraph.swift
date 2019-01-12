@@ -146,7 +146,8 @@ public struct MockManifestGraph {
             url: path.asString,
             version: nil,
             manifestVersion: .v4,
-            dependencies: MockManifestGraph.createDependencies(repos: repos, dependencies: rootDeps)
+            dependencies: MockManifestGraph.createDependencies(repos: repos, dependencies: rootDeps),
+            instrumentationSettings: []
         )
 
         // Create the manifests from mock packages.
@@ -159,7 +160,8 @@ public struct MockManifestGraph {
                 url: url,
                 version: package.version,
                 manifestVersion: .v4,
-                dependencies: MockManifestGraph.createDependencies(repos: repos, dependencies: package.dependencies)
+                dependencies: MockManifestGraph.createDependencies(repos: repos, dependencies: package.dependencies),
+                instrumentationSettings: []
             )
             return (MockManifestLoader.Key(url: url, version: package.version), manifest)
         }))

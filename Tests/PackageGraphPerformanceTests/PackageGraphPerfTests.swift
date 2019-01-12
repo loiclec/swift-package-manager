@@ -51,7 +51,8 @@ class PackageGraphPerfTests: XCTestCasePerf {
                 products: [
                     ProductDescription(name: name, targets: [name])
                 ],
-                targets: targets
+                targets: targets,
+                instrumentationSettings: []
             )
             if pkg == 1 {
                 rootManifests = [manifest]

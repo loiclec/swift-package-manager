@@ -174,7 +174,7 @@ extension ManifestBuilder {
         let kind = InstrumentationSetting.Kind.coverage // FIXME
         let targets = try json.get("targets") as [String]
         let rawConfig: String = try json.get("configuration")
-        let configuration = try BuildConfiguration(rawValue: rawConfig)!
+        let configuration = BuildConfiguration(rawValue: rawConfig)!
         return InstrumentationSetting(kind: .coverage, targets: targets, configuration: configuration)
     }
     

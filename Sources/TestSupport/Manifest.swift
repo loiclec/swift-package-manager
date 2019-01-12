@@ -42,7 +42,8 @@ extension Manifest {
             swiftLanguageVersions: swiftLanguageVersions,
             dependencies: dependencies,
             products: products,
-            targets: targets
+            targets: targets,
+            instrumentationSettings: []
         )
     }
 
@@ -76,7 +77,8 @@ extension Manifest {
             swiftLanguageVersions: swiftLanguageVersions,
             dependencies: dependencies,
             products: products,
-            targets: targets
+            targets: targets,
+            instrumentationSettings: []
         )
     }
 }
